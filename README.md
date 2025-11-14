@@ -45,3 +45,10 @@
     * 与他人的灵宠聊天
 
 6. 未完待续
+
+## 启动
+
+```bash
+pnpm install
+pnpm start
+```
