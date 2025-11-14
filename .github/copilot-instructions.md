@@ -1,4 +1,4 @@
-# GitHub Copilot 项目协作指令 (`my-pet`)
+# GitHub Copilot 项目协作指令 (`floating`)
 
 每次尽量少量生成代码片段，优先小步迭代，遵循以下约定与偏好。
 
