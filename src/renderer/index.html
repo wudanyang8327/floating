@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>桌面宠物</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <script>console.log('[HTML] body start');</script>
+    <div id="pet" class="pet idle">
+        <canvas id="pet-canvas" width="128" height="128"></canvas>
+    </div>
+    <script>console.log('[HTML] before anim-engine');</script>
+    <script src="anim-engine.js"></script>
+    <script>console.log('[HTML] before pet.js');</script>
+    <script src="pet.js"></script>
+    <script>console.log('[HTML] all scripts loaded');</script>
+</body>
+
+</html>
