@@ -75,8 +75,8 @@ function createWindow() {
 
     mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-    // 开发模式打开开发者工具
-    if (process.env.NODE_ENV !== 'production') {
+    // 仅在开发模式打开开发者工具（打包后不会打开）
+    if (!app.isPackaged && process.env.NODE_ENV === 'development') {
         mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
 
