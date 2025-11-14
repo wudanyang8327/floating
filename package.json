@@ -1,6 +1,6 @@
 {
     "name": "floating",
-    "version": "1.0.0",
+    "version": "0.0.4",
     "description": "一个可爱的桌面宠物应用",
     "main": "src/main.js",
     "scripts": {
