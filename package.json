@@ -27,7 +27,10 @@
             "output": "release"
         },
         "mac": {
-            "target": "dmg"
+            "target": "dmg",
+            "identity": null,
+            "hardenedRuntime": false,
+            "gatekeeperAssess": false
         },
         "win": {
             "target": "nsis"
