@@ -27,13 +27,14 @@ async function initStore() {
     const mod = await import('electron-store');
     const ElectronStore = mod.default;
     const fs = require('fs');
-    const dataDir = path.join(process.cwd(), 'data');
+    // 使用 userData 目录，开发和打包后都能正确工作
+    const dataDir = path.join(app.getPath('userData'), 'data');
     try {
         if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
     } catch (e) {
-        console.error('创建数据目录失败, 使用默认 userData 目录:', e);
+        console.error('创建数据目录失败:', e);
     }
-    store = new ElectronStore({ name: 'pet-state', cwd: fs.existsSync(dataDir) ? dataDir : undefined });
+    store = new ElectronStore({ name: 'pet-state', cwd: dataDir });
     // 使用新存储层读取并归一化
     const persisted = store.get('petState') || {};
     petState = normalizeState({ ...persisted });
@@ -41,6 +42,7 @@ async function initStore() {
     // 从 data/petAPI.json 读取聊天配置
     chatConfig = loadApiConfig();
     console.log('[main] API 配置已加载:', getConfigPath());
+    console.log('[main] 数据目录:', dataDir);
 }
 
 let mainWindow;
@@ -72,6 +74,11 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+    // 开发模式打开开发者工具
+    if (process.env.NODE_ENV !== 'production') {
+        mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
 
     // 启动时应用穿透状态
     if (petState.passThrough) {
@@ -107,6 +114,7 @@ function createTray() {
     tray.setToolTip('桌面宠物');
     updateTrayTitle();
     buildTrayMenu();
+    console.log('[main] Tray 创建成功');
 }
 
 function buildTrayMenu() {
@@ -117,6 +125,7 @@ function buildTrayMenu() {
         { label: '玩耍', click: () => performAction('play') },
         { label: '睡觉', click: () => performAction('sleep') },
         { type: 'separator' },
+        { label: '设置', click: () => showSettings() },
         { label: '退出', click: () => app.quit() }
     ]);
     tray.setContextMenu(contextMenu);
@@ -296,6 +305,17 @@ function getChatConfig() {
     };
 }
 
+function showSettings() {
+    console.log('[main] showSettings 被调用');
+    if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('show-settings');
+        console.log('[main] 已发送 show-settings 事件');
+    } else {
+        console.error('[main] mainWindow 不存在或未就绪');
+    }
+}
+
+
 // IPC
 ipcMain.handle('perform-action', (_, action) => { performAction(action); return petState; });
 ipcMain.handle('get-state', () => petState);
@@ -309,6 +329,10 @@ ipcMain.handle('toggle-pass-through', () => { togglePassThrough(); return petSta
 ipcMain.handle('chat', async (_, userMessage) => await chat(userMessage));
 ipcMain.handle('update-chat-config', (_, config) => updateChatConfig(config));
 ipcMain.handle('get-chat-config', () => getChatConfig());
+ipcMain.on('quit-app', () => {
+    console.log('[main] 收到退出请求');
+    app.quit();
+});
 
 app.whenReady().then(async () => {
     await initStore();

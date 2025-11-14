@@ -21,7 +21,9 @@
         "files": [
             "src/**/*",
             "data/pet-state.json",
-            "package.json"
+            "data/petAPI.json.example",
+            "package.json",
+            "node_modules/**/*"
         ],
         "directories": {
             "output": "release"

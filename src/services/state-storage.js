@@ -4,6 +4,8 @@
 
 const path = require('path');
 const fs = require('fs');
+const { app } = require('electron');
+
 let ElectronStore = null;
 let storeInstance = null;
 let memoryState = {}; // 回退内存
@@ -13,7 +15,8 @@ function ensureStore() {
     try {
         const mod = require('electron-store');
         ElectronStore = mod;
-        const dataDir = path.join(process.cwd(), 'data');
+        // 使用 userData 目录，开发和打包后都能正确工作
+        const dataDir = path.join(app.getPath('userData'), 'data');
         if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
         storeInstance = new ElectronStore({ name: 'pet-state', cwd: dataDir });
     } catch (e) {

@@ -61,21 +61,38 @@ function buildSystemPrompt(state) {
 
 const fs = require('fs');
 const path = require('path');
+const { app } = require('electron');
 
-const HISTORY_PATH = path.join(__dirname, '../../data/chat-history.json');
+// 使用 userData 目录，确保开发和打包后都能正确工作
+const HISTORY_FILE = 'chat-history.json';
+const DATA_DIR = path.join(app.getPath('userData'), 'data');
+const HISTORY_PATH = path.join(DATA_DIR, HISTORY_FILE);
 const SUMMARY_BATCH_SIZE = 10;
+
+/**
+ * 确保数据目录存在
+ */
+function ensureDataDir() {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+}
 
 /**
  * 加载聊天历史和记忆
  * @returns {Object} { memory: [], history: [] }
  */
 function loadHistory() {
+    ensureDataDir();
     try {
+        if (!fs.existsSync(HISTORY_PATH)) {
+            return { memory: [], history: [], importantFacts: [] };
+        }
         const raw = fs.readFileSync(HISTORY_PATH, 'utf-8');
         const obj = JSON.parse(raw);
         if (Array.isArray(obj)) {
             // 兼容旧格式
-            return { memory: [], history: obj };
+            return { memory: [], history: obj, importantFacts: [] };
         }
         return {
             memory: Array.isArray(obj.memory) ? obj.memory : [],
@@ -92,6 +109,7 @@ function loadHistory() {
  * 保存聊天历史和记忆
  */
 function saveHistory(obj) {
+    ensureDataDir();
     try {
         fs.writeFileSync(HISTORY_PATH, JSON.stringify(obj, null, 2), 'utf-8');
     } catch (e) {

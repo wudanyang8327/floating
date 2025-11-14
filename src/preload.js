@@ -11,8 +11,14 @@ contextBridge.exposeInMainWorld('petAPI', {
     chat: (userMessage) => ipcRenderer.invoke('chat', userMessage),
     updateChatConfig: (config) => ipcRenderer.invoke('update-chat-config', config),
     getChatConfig: () => ipcRenderer.invoke('get-chat-config'),
+    // 应用控制
+    quit: () => ipcRenderer.send('quit-app'),
     onState: (cb) => {
         ipcRenderer.removeAllListeners('pet-state');
         ipcRenderer.on('pet-state', (_, state) => cb(state));
+    },
+    onShowSettings: (cb) => {
+        ipcRenderer.removeAllListeners('show-settings');
+        ipcRenderer.on('show-settings', () => cb());
     }
 });

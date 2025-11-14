@@ -1,9 +1,11 @@
 // API 配置管理：读写 data/petAPI.json
 const fs = require('fs');
 const path = require('path');
+const { app } = require('electron');
 
 const CONFIG_FILE = 'petAPI.json';
-const DATA_DIR = path.join(process.cwd(), 'data');
+// 使用 userData 目录，开发和打包后都能正确工作
+const DATA_DIR = path.join(app.getPath('userData'), 'data');
 const CONFIG_PATH = path.join(DATA_DIR, CONFIG_FILE);
 
 // 默认配置

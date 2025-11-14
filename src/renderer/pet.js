@@ -220,10 +220,66 @@ chatItem.addEventListener('click', () => {
 });
 menu.appendChild(chatItem);
 
+// 添加设置选项
+const settingsItem = document.createElement('div');
+settingsItem.textContent = '设置 ⚙️';
+settingsItem.style.padding = '6px 14px';
+settingsItem.style.cursor = 'pointer';
+settingsItem.addEventListener('mouseenter', () => settingsItem.style.background = '#555');
+settingsItem.addEventListener('mouseleave', () => settingsItem.style.background = 'transparent');
+settingsItem.addEventListener('click', () => {
+    hideMenu();
+    // 触发设置面板显示
+    const event = new CustomEvent('open-settings');
+    document.dispatchEvent(event);
+});
+menu.appendChild(settingsItem);
+
+// 添加分隔线
+const separator = document.createElement('hr');
+separator.style.border = 'none';
+separator.style.height = '1px';
+separator.style.background = '#444';
+separator.style.margin = '4px 0';
+menu.appendChild(separator);
+
+// 添加退出选项
+const quitItem = document.createElement('div');
+quitItem.textContent = '沉寂 💤';
+quitItem.style.padding = '6px 14px';
+quitItem.style.cursor = 'pointer';
+quitItem.addEventListener('mouseenter', () => quitItem.style.background = '#555');
+quitItem.addEventListener('mouseleave', () => quitItem.style.background = 'transparent');
+quitItem.addEventListener('click', () => {
+    hideMenu();
+    if (window.petAPI && window.petAPI.quit) {
+        window.petAPI.quit();
+    }
+});
+menu.appendChild(quitItem);
+
 function showMenu(x, y) {
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
     menu.style.display = 'block';
+    
+    // 获取菜单尺寸
+    const menuRect = menu.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 确保菜单不会超出窗口边界
+    let finalX = x;
+    let finalY = y;
+    
+    if (x + menuRect.width > windowWidth) {
+        finalX = windowWidth - menuRect.width - 5;
+    }
+    
+    if (y + menuRect.height > windowHeight) {
+        finalY = windowHeight - menuRect.height - 5;
+    }
+    
+    menu.style.left = finalX + 'px';
+    menu.style.top = finalY + 'px';
 }
 
 function hideMenu() {
@@ -269,8 +325,8 @@ let chatBubbleTimer = null;
 // 聊天输入面板
 const chatPanel = document.createElement('div');
 chatPanel.style.position = 'fixed';
-chatPanel.style.right = '20px';
-chatPanel.style.bottom = '20px';
+chatPanel.style.left = '20px';
+chatPanel.style.top = '20px';
 chatPanel.style.width = '240px';
 chatPanel.style.background = 'rgba(20,20,30,0.92)';
 chatPanel.style.border = '1px solid rgba(255,255,255,0.12)';
@@ -524,4 +580,82 @@ window.petAPI.onState((state) => {
     if (seq) playSeq(seq);
     console.log('[pet] 初始状态加载完成');
 })();
+
+// === 设置面板逻辑 ===
+// 等待 DOM 加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    const settingsPanel = document.getElementById('settings-panel');
+    const apiKeyInput = document.getElementById('api-key');
+    const baseUrlInput = document.getElementById('base-url');
+    const modelInput = document.getElementById('model');
+    const saveBtn = document.getElementById('save-config');
+    const cancelBtn = document.getElementById('cancel-config');
+    const statusDiv = document.getElementById('config-status');
+
+    if (!settingsPanel || !apiKeyInput || !baseUrlInput || !modelInput) {
+        console.warn('[settings] 设置面板元素未找到');
+        return;
+    }
+
+    function showSettings() {
+        settingsPanel.classList.remove('hidden');
+        loadCurrentConfig();
+    }
+
+    function hideSettings() {
+        settingsPanel.classList.add('hidden');
+        statusDiv.textContent = '';
+        statusDiv.className = 'config-status';
+    }
+
+    async function loadCurrentConfig() {
+        try {
+            const config = await window.petAPI.getChatConfig();
+            apiKeyInput.value = config.apiKey === '***已配置***' ? '' : config.apiKey;
+            baseUrlInput.value = config.baseURL || '';
+            modelInput.value = config.model || '';
+        } catch (e) {
+            console.error('[settings] 加载配置失败:', e);
+        }
+    }
+
+    async function saveConfig() {
+        const config = {
+            apiKey: apiKeyInput.value.trim(),
+            baseURL: baseUrlInput.value.trim(),
+            model: modelInput.value.trim()
+        };
+
+        if (!config.apiKey) {
+            statusDiv.textContent = '请输入 API Key';
+            statusDiv.className = 'config-status error';
+            return;
+        }
+
+        try {
+            await window.petAPI.updateChatConfig(config);
+            statusDiv.textContent = '保存成功！';
+            statusDiv.className = 'config-status success';
+            setTimeout(() => hideSettings(), 1500);
+        } catch (e) {
+            statusDiv.textContent = '保存失败: ' + e.message;
+            statusDiv.className = 'config-status error';
+        }
+    }
+
+    saveBtn.addEventListener('click', saveConfig);
+    cancelBtn.addEventListener('click', hideSettings);
+
+    // 监听来自主进程的显示设置事件
+    if (window.petAPI && window.petAPI.onShowSettings) {
+        window.petAPI.onShowSettings(() => {
+            showSettings();
+        });
+    }
+
+    // 监听来自右键菜单的显示设置事件
+    document.addEventListener('open-settings', () => {
+        showSettings();
+    });
+});
 
